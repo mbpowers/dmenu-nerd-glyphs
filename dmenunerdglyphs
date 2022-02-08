@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Get user selection via dmenu from emoji file.
+if [ -e $(dirname $0)/glyphlist ]
+then
+    chosen=$(cut -d ';' -f1 $(dirname $0)/glyphlist | dmenu -i -l 30 | sed "s/ .*//")
+else
+    echo -en "$(curl https://www.nerdfonts.com/cheat-sheet \
+        | grep 'class="class-name">' \
+        | sed 's/ *<div class="class-name">//; s/<\/div><div class="codepoint">/ \\u/; s/<\/div>//; s/\(.* \)\(.*\)/\2 \1/' \
+        )" > $(dirname $0)/glyphlist
+    chosen=$(cut -d ';' -f1 $(dirname $0)/glyphlist | dmenu -i -l 30 | sed "s/ .*//")
+fi
+
+# Exit if none chosen.
+[ -z "$chosen" ] && exit
+
+# If you run this command with an argument, it will automatically insert the
+# character. Otherwise, show a message that the emoji has been copied.
+if [ -n "$1" ]; then
+	xdotool type "$chosen"
+else
+	printf "$chosen" | xclip -selection clipboard
+	notify-send "'$chosen' copied to clipboard." &
+fi
